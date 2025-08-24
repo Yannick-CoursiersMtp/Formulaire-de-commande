@@ -1017,7 +1017,21 @@ Créneau de livraison: ${dateLivraisonInput.value} entre ${heureDebutLivraisonIn
 
       confirmOrderBtn.addEventListener('click', () => {
         if(rememberMeCheckbox.checked) saveUserInfo();
-        form.submit();
+        fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form)
+        })
+        .then(response => {
+          if (response.ok) {
+            const nextUrl = form.querySelector('input[name="_next"]').value;
+            window.location.href = nextUrl;
+          } else {
+            throw new Error('Network response was not ok');
+          }
+        })
+        .catch(() => {
+          alert("Impossible d’envoyer la commande");
+        });
       });
 
       // --- INITIALIZATION ---
