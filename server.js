@@ -8,14 +8,42 @@ const ORDERS_FILE = './orders.json';
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX = 10; // max requests per window per IP
 const requests = new Map();
+const cleanupTimers = new Map();
+
+function scheduleCleanup(ip) {
+  if (cleanupTimers.has(ip)) {
+    clearTimeout(cleanupTimers.get(ip));
+  }
+  const timer = setTimeout(() => {
+    const timestamps = requests.get(ip);
+    if (!timestamps) return;
+    const windowStart = Date.now() - RATE_LIMIT_WINDOW_MS;
+    const recent = timestamps.filter(ts => ts > windowStart);
+    if (recent.length === 0) {
+      requests.delete(ip);
+      cleanupTimers.delete(ip);
+    } else {
+      requests.set(ip, recent);
+      scheduleCleanup(ip);
+    }
+  }, RATE_LIMIT_WINDOW_MS);
+  cleanupTimers.set(ip, timer);
+}
 
 function isRateLimited(ip) {
   const now = Date.now();
   const windowStart = now - RATE_LIMIT_WINDOW_MS;
   const timestamps = requests.get(ip) || [];
   const recent = timestamps.filter(ts => ts > windowStart);
+
+  if (recent.length === 0) {
+    requests.delete(ip);
+  }
+
   recent.push(now);
   requests.set(ip, recent);
+  scheduleCleanup(ip);
+
   return recent.length > RATE_LIMIT_MAX;
 }
 
