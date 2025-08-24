@@ -438,6 +438,7 @@
         <div id="map"></div>
         <div id="summary">
           <p>Distance : <span id="distance-value">--</span> <span class="spinner" id="distance-spinner"></span></p>
+          <div id="distance-error"></div>
           <div id="price-breakdown"></div>
           <p id="price">-- €</p>
         </div>
@@ -497,6 +498,7 @@
       const priceElement = document.getElementById('price');
       const distanceElement = document.getElementById('distance-value');
       const distanceSpinner = document.getElementById('distance-spinner');
+      const distanceError = document.getElementById('distance-error');
       const priceBreakdownContainer = document.getElementById('price-breakdown');
       const pickupTimeError = document.getElementById('pickup-time-error');
       const deliveryTimeError = document.getElementById('delivery-time-error');
@@ -770,18 +772,21 @@
         try {
           const response = await fetch(osrmRequestUrl);
           const data = await response.json();
-          
+
           if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
             const route = data.routes[0];
             state.distance = route.distance / 1000; // OSRM gives distance in meters
             updateMapRoute(route);
+            distanceError.textContent = "";
           } else {
             state.distance = -1;
+            distanceError.textContent = "Impossible de calculer la distance.";
             console.error("OSRM error: Invalid route response", data);
           }
         } catch (error) {
           console.error("Distance calculation error:", error);
           state.distance = -1;
+          distanceError.textContent = "Impossible de calculer la distance.";
         } finally {
           state.isCalculatingDistance = false;
           updateUI();
