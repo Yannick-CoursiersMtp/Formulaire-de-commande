@@ -186,20 +186,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // --- PARCEL MANAGEMENT ---
       function generateParcelFields() {
-          parcelsContainer.innerHTML = '';
+          parcelsContainer.textContent = '';
           const count = parseInt(parcelCountInput.value) || 1;
           for (let i = 1; i <= count; i++) {
               const parcelGroup = document.createElement('div');
               parcelGroup.className = 'parcel-group';
-              parcelGroup.innerHTML = `
-                  <h3>Colis ${i}</h3>
-                  <div class="form-grid">
-                      <input type="number" name="poids_${i}" placeholder="Poids (kg, ex: 0.5)" min="0" step="0.01" required>
-                      <input type="number" name="longueur_${i}" placeholder="Longueur (cm)" min="0">
-                      <input type="number" name="largeur_${i}" placeholder="Largeur (cm)" min="0">
-                      <input type="number" name="hauteur_${i}" placeholder="Hauteur (cm)" min="0">
-                  </div>
-              `;
+
+              const heading = document.createElement('h3');
+              heading.textContent = `Colis ${i}`;
+              parcelGroup.appendChild(heading);
+
+              const grid = document.createElement('div');
+              grid.className = 'form-grid';
+
+              const poidsInput = document.createElement('input');
+              poidsInput.type = 'number';
+              poidsInput.name = `poids_${i}`;
+              poidsInput.placeholder = 'Poids (kg, ex: 0.5)';
+              poidsInput.min = '0';
+              poidsInput.step = '0.01';
+              poidsInput.required = true;
+              grid.appendChild(poidsInput);
+
+              const longueurInput = document.createElement('input');
+              longueurInput.type = 'number';
+              longueurInput.name = `longueur_${i}`;
+              longueurInput.placeholder = 'Longueur (cm)';
+              longueurInput.min = '0';
+              grid.appendChild(longueurInput);
+
+              const largeurInput = document.createElement('input');
+              largeurInput.type = 'number';
+              largeurInput.name = `largeur_${i}`;
+              largeurInput.placeholder = 'Largeur (cm)';
+              largeurInput.min = '0';
+              grid.appendChild(largeurInput);
+
+              const hauteurInput = document.createElement('input');
+              hauteurInput.type = 'number';
+              hauteurInput.name = `hauteur_${i}`;
+              hauteurInput.placeholder = 'Hauteur (cm)';
+              hauteurInput.min = '0';
+              grid.appendChild(hauteurInput);
+
+              parcelGroup.appendChild(grid);
               parcelsContainer.appendChild(parcelGroup);
           }
           parcelsContainer.querySelectorAll('input').forEach(input => input.addEventListener('input', updateUI));
@@ -447,28 +477,55 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        priceBreakdownContainer.innerHTML = '';
+        priceBreakdownContainer.textContent = '';
         if (state.distance > 0) {
             const p = state.pricing;
-            let breakdownHtml = `<p class="price-breakdown">Tarif au km: <span>${p.currentTariff.toFixed(2)} €</span>`;
+            const tariffP = document.createElement('p');
+            tariffP.className = 'price-breakdown';
+            tariffP.textContent = 'Tarif au km: ';
+            const tariffSpan = document.createElement('span');
+            tariffSpan.textContent = `${p.currentTariff.toFixed(2)} €`;
+            tariffP.appendChild(tariffSpan);
             if (p.isTarifMajore) {
-                breakdownHtml += `<span class="reason">${p.tarifReason}</span>`;
+                const reasonSpan = document.createElement('span');
+                reasonSpan.className = 'reason';
+                reasonSpan.textContent = p.tarifReason;
+                tariffP.appendChild(reasonSpan);
             }
-            breakdownHtml += `</p>`;
-            
-            breakdownHtml += `<p class="price-breakdown price-result">Prix de base: <span>${state.distance.toFixed(2)} km × ${p.currentTariff.toFixed(2)} €/km = ${p.prix_base.toFixed(2)} €</span></p>`;
+            priceBreakdownContainer.appendChild(tariffP);
+
+            const baseP = document.createElement('p');
+            baseP.className = 'price-breakdown price-result';
+            baseP.textContent = 'Prix de base: ';
+            const baseSpan = document.createElement('span');
+            baseSpan.textContent = `${state.distance.toFixed(2)} km × ${p.currentTariff.toFixed(2)} €/km = ${p.prix_base.toFixed(2)} €`;
+            baseP.appendChild(baseSpan);
+            priceBreakdownContainer.appendChild(baseP);
 
             if(p.timeSurchargePercentage > 0) {
-                breakdownHtml += `<p class="price-breakdown">Majoration (${state.pricing.timeSurchargeReason} / +${state.pricing.timeSurchargePercentage * 100}%): +${state.pricing.timeSurchargeAmount.toFixed(2)} €</p>`;
-                breakdownHtml += `<p class="price-breakdown price-result">Sous-total: <span>${p.prix_base.toFixed(2)} € + ${p.timeSurchargeAmount.toFixed(2)} € = ${p.subtotal.toFixed(2)} €</span></p>`;
+                const surchargeP = document.createElement('p');
+                surchargeP.className = 'price-breakdown';
+                surchargeP.textContent = `Majoration (${state.pricing.timeSurchargeReason} / +${state.pricing.timeSurchargePercentage * 100}%): +${state.pricing.timeSurchargeAmount.toFixed(2)} €`;
+                priceBreakdownContainer.appendChild(surchargeP);
+
+                const subtotalP = document.createElement('p');
+                subtotalP.className = 'price-breakdown price-result';
+                subtotalP.textContent = 'Sous-total: ';
+                const subtotalSpan = document.createElement('span');
+                subtotalSpan.textContent = `${p.prix_base.toFixed(2)} € + ${p.timeSurchargeAmount.toFixed(2)} € = ${p.subtotal.toFixed(2)} €`;
+                subtotalP.appendChild(subtotalSpan);
+                priceBreakdownContainer.appendChild(subtotalP);
             }
-            
+
             if(p.minimumApplied) {
                 const type = p.timeSurchargePercentage > 0 ? 'urgente' : 'standard';
-                breakdownHtml += `<p class="price-breakdown"><i>Un minimum de ${p.minimumPrice.toFixed(2)}€ s'applique pour une course ${type}.</i></p>`;
+                const minimumP = document.createElement('p');
+                minimumP.className = 'price-breakdown';
+                const italic = document.createElement('i');
+                italic.textContent = `Un minimum de ${p.minimumPrice.toFixed(2)}€ s'applique pour une course ${type}.`;
+                minimumP.appendChild(italic);
+                priceBreakdownContainer.appendChild(minimumP);
             }
-            
-            priceBreakdownContainer.innerHTML = breakdownHtml;
             priceElement.textContent = p.prix_final.toFixed(2) + ' €';
             priceElement.classList.add('price-updated');
             floatingPriceEl.classList.add('price-updated');
@@ -483,7 +540,7 @@ document.addEventListener('DOMContentLoaded', function() {
             floatingSummaryEl.classList.add('visible');
 
         } else {
-            priceBreakdownContainer.innerHTML = '';
+            priceBreakdownContainer.textContent = '';
             priceElement.textContent = '-- €';
             // Hide floating summary
             floatingSummaryEl.classList.remove('visible');
