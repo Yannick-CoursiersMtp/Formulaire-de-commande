@@ -59,7 +59,8 @@ function saveOrder(data) {
 
 const server = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/api/orders') {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : req.socket.remoteAddress;
     if (isRateLimited(ip)) {
       res.writeHead(429, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Too many requests' }));
