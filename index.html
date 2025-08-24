@@ -75,7 +75,8 @@
         <h2><i class="fas fa-user"></i> Vos Informations</h2>
         <div class="form-grid">
           <input type="text" id="nom" name="Nom du client" placeholder="Nom complet" required>
-          <input type="tel" id="tel" name="Téléphone" placeholder="Téléphone" required>
+          <input type="tel" id="tel" name="Téléphone" placeholder="Téléphone" required pattern="^[+]?[0-9]{10,15}$" title="Format : +33612345678 ou 0612345678">
+          <div id="tel-error" class="error-message full-width">Numéro de téléphone invalide. Format attendu : 10 à 15 chiffres, peut commencer par un +.</div>
           <input type="email" id="email" name="Email" placeholder="Adresse email" required class="full-width">
         </div>
         <div class="remember-me full-width">

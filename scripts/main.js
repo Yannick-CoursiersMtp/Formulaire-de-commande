@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const arriveeInput = document.getElementById('adresse_arrivee');
       const nomInput = document.getElementById('nom');
       const telInput = document.getElementById('tel');
+      const telError = document.getElementById('tel-error');
       const emailInput = document.getElementById('email');
         const rememberMeCheckbox = document.getElementById('remember-me');
         const clearSavedDataBtn = document.getElementById('clear-saved-data');
@@ -425,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
             state.isDeliveryTimeValid = startDeliveryDateTime > startPickupDateTime && startDeliveryDateTime < endDeliveryDateTime;
         }
 
-        state.isFormFullyFilled = allInputs.every(field => !field.required || field.value.trim() !== '');
+        state.isFormFullyFilled = allInputs.every(field => !field.required || field.value.trim() !== '') && telInput.checkValidity();
 
         // --- Calculate Price ---
         state.pricing = calculatePrice(state.distance, totalPoids, isVolumeMajore, pickupWindowHours);
@@ -433,6 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- DOM Updates ---
         pickupTimeError.style.display = (dateRecuperationValue && heureDebutRecuperationValue && heureFinRecuperationValue && !state.isPickupTimeValid) ? 'block' : 'none';
         deliveryTimeError.style.display = (dateLivraisonValue && heureDebutLivraisonValue && heureFinLivraisonValue && !state.isDeliveryTimeValid) ? 'block' : 'none';
+        telError.style.display = telInput.value && !telInput.checkValidity() ? 'block' : 'none';
 
         distanceSpinner.style.display = state.isCalculatingDistance ? 'inline-block' : 'none';
         priceElement.style.color = state.isCalculatingDistance ? 'var(--greyed-out-color)' : 'var(--primary-color)';
