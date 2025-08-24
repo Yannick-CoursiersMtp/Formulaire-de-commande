@@ -464,6 +464,7 @@
     <div class="modal-content">
         <h2>Confirmer votre commande</h2>
         <div id="modal-summary-content"></div>
+        <div id="submit-error" class="error-message"></div>
         <div class="modal-actions">
             <button type="button" id="edit-order-btn" class="btn-secondary">📝 Modifier</button>
             <button type="button" id="confirm-order-btn">🚀 Confirmer</button>
@@ -523,6 +524,7 @@
       const modalSummaryContent = document.getElementById('modal-summary-content');
       const editOrderBtn = document.getElementById('edit-order-btn');
       const confirmOrderBtn = document.getElementById('confirm-order-btn');
+      const submitError = document.getElementById('submit-error');
 
       // --- STATE ---
       let state = {
@@ -1016,8 +1018,19 @@ Créneau de livraison: ${dateLivraisonInput.value} entre ${heureDebutLivraisonIn
       });
 
       confirmOrderBtn.addEventListener('click', () => {
-        if(rememberMeCheckbox.checked) saveUserInfo();
-        form.submit();
+        if (rememberMeCheckbox.checked) saveUserInfo();
+        submitError.style.display = 'none';
+        fetch('https://formsubmit.co/sandrineleroy@gmail.com', {
+          method: 'POST',
+          body: new FormData(form)
+        })
+          .then(() => {
+            window.location.href = form.querySelector('input[name="_next"]').value;
+          })
+          .catch(() => {
+            submitError.textContent = 'Impossible d’envoyer la commande, veuillez réessayer.';
+            submitError.style.display = 'block';
+          });
       });
 
       // --- INITIALIZATION ---
