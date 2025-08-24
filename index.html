@@ -1017,6 +1017,7 @@ Créneau de livraison: ${dateLivraisonInput.value} entre ${heureDebutLivraisonIn
 
       confirmOrderBtn.addEventListener('click', () => {
         if(rememberMeCheckbox.checked) saveUserInfo();
+        console.log('Formulaire envoyé');
         form.submit();
       });
 
