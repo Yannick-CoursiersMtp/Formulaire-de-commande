@@ -431,6 +431,7 @@
         <div class="remember-me full-width">
             <input type="checkbox" id="remember-me">
             <label for="remember-me">Se souvenir de moi pour la prochaine fois</label>
+            <button type="button" id="clear-saved-data">Effacer les données enregistrées</button>
         </div>
       </div>
 
@@ -505,8 +506,9 @@
       const nomInput = document.getElementById('nom');
       const telInput = document.getElementById('tel');
       const emailInput = document.getElementById('email');
-      const rememberMeCheckbox = document.getElementById('remember-me');
-      const parcelCountInput = document.getElementById('parcel_count');
+        const rememberMeCheckbox = document.getElementById('remember-me');
+        const clearSavedDataBtn = document.getElementById('clear-saved-data');
+        const parcelCountInput = document.getElementById('parcel_count');
       const parcelsContainer = document.getElementById('parcels-container');
       const mapContainer = document.getElementById('map');
       const floatingSummaryEl = document.getElementById('floating-summary');
@@ -679,22 +681,55 @@
       }
 
       // --- LOCAL STORAGE ---
-      function loadUserInfo() {
+      const AES_KEY = '12345678901234567890123456789012';
+      async function encryptData(plainText) {
+          const enc = new TextEncoder();
+          const key = await crypto.subtle.importKey('raw', enc.encode(AES_KEY), { name: 'AES-GCM' }, false, ['encrypt']);
+          const iv = crypto.getRandomValues(new Uint8Array(12));
+          const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plainText));
+          const combined = new Uint8Array(iv.length + cipher.byteLength);
+          combined.set(iv);
+          combined.set(new Uint8Array(cipher), iv.length);
+          return btoa(String.fromCharCode(...combined));
+      }
+      async function decryptData(cipherText) {
+          const data = Uint8Array.from(atob(cipherText), c => c.charCodeAt(0));
+          const iv = data.slice(0, 12);
+          const cipher = data.slice(12);
+          const enc = new TextEncoder();
+          const key = await crypto.subtle.importKey('raw', enc.encode(AES_KEY), { name: 'AES-GCM' }, false, ['decrypt']);
+          const plainBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
+          return new TextDecoder().decode(plainBuffer);
+      }
+
+      async function loadUserInfo() {
         if (localStorage.getItem('lcmUserRemember') === 'true') {
-            const savedInfo = JSON.parse(localStorage.getItem('lcmUserInfo'));
-            if (savedInfo) {
-              nomInput.value = savedInfo.nom || '';
-              emailInput.value = savedInfo.email || '';
-              telInput.value = savedInfo.tel || '';
+            const encrypted = localStorage.getItem('lcmUserInfo');
+            if (encrypted) {
+              try {
+                const decrypted = await decryptData(encrypted);
+                const savedInfo = JSON.parse(decrypted);
+                if (savedInfo.expiresAt && savedInfo.expiresAt < Date.now()) {
+                  localStorage.removeItem('lcmUserInfo');
+                } else {
+                  nomInput.value = savedInfo.nom || '';
+                  emailInput.value = savedInfo.email || '';
+                  telInput.value = savedInfo.tel || '';
+                }
+              } catch (e) {
+                console.error('Unable to decrypt user info', e);
+                localStorage.removeItem('lcmUserInfo');
+              }
             }
             rememberMeCheckbox.checked = true;
         }
       }
 
-      function saveUserInfo() {
+      async function saveUserInfo() {
           if (rememberMeCheckbox.checked) {
-              const userInfo = { nom: nomInput.value, email: emailInput.value, tel: telInput.value };
-              localStorage.setItem('lcmUserInfo', JSON.stringify(userInfo));
+              const userInfo = { nom: nomInput.value, email: emailInput.value, tel: telInput.value, expiresAt: Date.now() + 30*24*60*60*1000 };
+              const encrypted = await encryptData(JSON.stringify(userInfo));
+              localStorage.setItem('lcmUserInfo', encrypted);
           }
       }
 
@@ -996,13 +1031,21 @@ Créneau de livraison: ${dateLivraisonInput.value} entre ${heureDebutLivraisonIn
       allInputs.forEach(input => {
           input.addEventListener('input', updateUI);
       });
-      parcelCountInput.addEventListener('input', generateParcelFields);
-      rememberMeCheckbox.addEventListener('change', handleRememberMeChange);
-      form.addEventListener('submit', (e) => {
-        e.preventDefault(); // Prevent actual submission
-        generateSummary();
-        modalSummaryContent.textContent = '';
-        const sanitize = value => (value == null ? '' : String(value));
+        parcelCountInput.addEventListener('input', generateParcelFields);
+        rememberMeCheckbox.addEventListener('change', handleRememberMeChange);
+        clearSavedDataBtn.addEventListener('click', () => {
+          localStorage.removeItem('lcmUserInfo');
+          localStorage.removeItem('lcmUserRemember');
+          nomInput.value = '';
+          emailInput.value = '';
+          telInput.value = '';
+          rememberMeCheckbox.checked = false;
+        });
+        form.addEventListener('submit', (e) => {
+          e.preventDefault(); // Prevent actual submission
+          generateSummary();
+          modalSummaryContent.textContent = '';
+          const sanitize = value => (value == null ? '' : String(value));
         const createSummaryItem = (label, value) => {
             const item = document.createElement('div');
             item.className = 'modal-summary-item';
@@ -1029,17 +1072,22 @@ Créneau de livraison: ${dateLivraisonInput.value} entre ${heureDebutLivraisonIn
         confirmationModal.classList.remove('visible');
       });
 
-      confirmOrderBtn.addEventListener('click', () => {
-        if(rememberMeCheckbox.checked) saveUserInfo();
-        console.log('Formulaire envoyé');
-        form.submit();
-      });
+        confirmOrderBtn.addEventListener('click', async () => {
+          if (rememberMeCheckbox.checked) {
+            const consent = confirm("Nous enregistrerons votre nom, email et téléphone dans votre navigateur pendant 30 jours. Acceptez-vous ?");
+            if (consent) {
+              await saveUserInfo();
+            }
+          }
+          console.log('Formulaire envoyé');
+          form.submit();
+        });
 
-      // --- INITIALIZATION ---
-      loadUserInfo();
-      generateParcelFields();
-      updateUI();
-    });
+        // --- INITIALIZATION ---
+        loadUserInfo();
+        generateParcelFields();
+        updateUI();
+      });
   </script>
 </body>
 </html>
