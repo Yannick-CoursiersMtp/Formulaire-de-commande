@@ -66,6 +66,12 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify({ error: 'Too many requests' }));
       return;
     }
+    const contentType = req.headers['content-type'];
+    if (contentType !== 'application/x-www-form-urlencoded') {
+      res.writeHead(415, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unsupported Media Type' }));
+      return;
+    }
 
     let body = '';
     req.on('data', chunk => {
