@@ -1004,15 +1004,27 @@ Créneau de livraison: ${dateLivraisonInput.value} entre ${heureDebutLivraisonIn
       form.addEventListener('submit', (e) => {
         e.preventDefault(); // Prevent actual submission
         generateSummary();
-        modalSummaryContent.innerHTML = `
-            <div class="modal-summary-item"><span>Départ:</span> <strong>${state.depart.properties.label}</strong></div>
-            <div class="modal-summary-item"><span>Arrivée:</span> <strong>${state.arrivee.properties.label}</strong></div>
-            <div class="modal-summary-item"><span>Créneau de récupération:</span> <strong>${dateRecuperationInput.value} entre ${heureDebutRecuperationInput.value} et ${heureFinRecuperationInput.value}</strong></div>
-            <div class="modal-summary-item"><span>Créneau de livraison:</span> <strong>${dateLivraisonInput.value} entre ${heureDebutLivraisonInput.value} et ${heureFinLivraisonInput.value}</strong></div>
-            <div class="modal-summary-item"><span>Nombre de colis:</span> <strong>${parcelCountInput.value}</strong></div>
-            <div class="modal-summary-item"><span>Poids total:</span> <strong>${(Array.from(document.querySelectorAll('input[name^=poids]')).reduce((acc, input) => acc + (parseFloat(input.value) || 0), 0)).toFixed(2)} kg</strong></div>
-            <div class="modal-summary-item"><span>Total estimé:</span> <strong>${state.pricing.prix_final.toFixed(2)} €</strong></div>
-        `;
+        modalSummaryContent.textContent = '';
+        const sanitize = value => (value == null ? '' : String(value));
+        const createSummaryItem = (label, value) => {
+            const item = document.createElement('div');
+            item.className = 'modal-summary-item';
+            const span = document.createElement('span');
+            span.textContent = sanitize(label);
+            const strong = document.createElement('strong');
+            strong.textContent = sanitize(value);
+            item.append(span, document.createTextNode(' '), strong);
+            return item;
+        };
+        modalSummaryContent.append(
+            createSummaryItem('Départ:', state.depart.properties.label),
+            createSummaryItem('Arrivée:', state.arrivee.properties.label),
+            createSummaryItem('Créneau de récupération:', `${dateRecuperationInput.value} entre ${heureDebutRecuperationInput.value} et ${heureFinRecuperationInput.value}`),
+            createSummaryItem('Créneau de livraison:', `${dateLivraisonInput.value} entre ${heureDebutLivraisonInput.value} et ${heureFinLivraisonInput.value}`),
+            createSummaryItem('Nombre de colis:', parcelCountInput.value),
+            createSummaryItem('Poids total:', `${(Array.from(document.querySelectorAll('input[name^=poids]')).reduce((acc, input) => acc + (parseFloat(input.value) || 0), 0)).toFixed(2)} kg`),
+            createSummaryItem('Total estimé:', `${state.pricing.prix_final.toFixed(2)} €`)
+        );
         confirmationModal.classList.add('visible');
       });
 
