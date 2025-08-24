@@ -366,7 +366,8 @@
   </header>
 
   <main>
-    <form id="orderForm" action="https://formsubmit.co/sandrineleroy@gmail.com" method="POST">
+    <form id="orderForm" action="/api/orders" method="POST">
+      <input type="text" name="nickname" id="nickname" style="display:none" autocomplete="off">
       <div class="form-section">
         <h2><i class="fas fa-road"></i> Détails de la Course</h2>
         <div class="form-grid">
@@ -444,10 +445,6 @@
         </div>
       </div>
 
-      <input type="hidden" name="_captcha" value="false">
-      <input type="hidden" name="_next" value="https://lescoursiersmontpellierains.fr/merci">
-      <input type="hidden" name="_subject" value="Nouvelle Commande via le Formulaire Web">
-      <input type="hidden" name="_autoresponse" value="Nous avons bien reçu votre demande de course. Nous la traitons dans les plus brefs délais. L'équipe des Coursiers Montpelliérains">
       <textarea name="Résumé de la commande" id="hidden-summary" style="display:none;"></textarea>
 
       <button type="submit" id="submit-button" disabled>Veuillez remplir le formulaire</button>
